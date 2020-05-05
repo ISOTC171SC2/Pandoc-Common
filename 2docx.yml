@@ -1,13 +1,13 @@
 from: markdown-latex_macros
 to: docx
 
-reference-doc: reference.docx
+reference-doc: common/reference.docx
 
 # table-of-contents: true
 toc-depth: 2
     
 filters:
-- WordExtrasFilter.lua
+- common/WordExtrasFilter.lua
 
 # Note that these take files, not their contents:
 include-before-body: []
