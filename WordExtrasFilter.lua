@@ -34,6 +34,9 @@ DOCX_TEXT.comment.Close = docx('</w:t>')
 DOCX_TEXT.highlight = {}
 DOCX_TEXT.highlight.Open = docx('<w:rPr><w:highlight w:val="yellow"/></w:rPr><w:t>')
 DOCX_TEXT.highlight.Close = docx('</w:t>')
+DOCX_TEXT.code = {}
+DOCX_TEXT.code.Open = docx('<w:rPr><w:rStyle w:val="InlineCode"/></w:rPr><w:t>')
+DOCX_TEXT.code.Close = docx('</w:t>')
 DOCX_TEXT.margin = {}
 DOCX_TEXT.margin.Open = docx('')
 DOCX_TEXT.margin.Close = docx('')
@@ -153,7 +156,9 @@ function handleBlocks(block)
 end
 
 function isSpecialSpan(text)
-	return text == 'comment' or text == 'margin' or text == 'fixme' or text == 'highlight'
+    return text == 'comment' or text == 'margin' or 
+            text == 'fixme' or text == 'highlight' or
+            text == 'code'
 end
 
 function handleInlines(span)
