@@ -59,6 +59,10 @@ DOCX_TEXT.bookmark.Close = ''
 DOCX_TEXT.rp = {}
 DOCX_TEXT.rp.Open = ''
 DOCX_TEXT.rp.Close = ''
+DOCX_TEXT.term = {}
+DOCX_TEXT.term.Open = '<w:pPr><w:pStyle w:val="Term(s)"/></w:pPr><w:r><w:t>'
+DOCX_TEXT.term.Close = '</w:t></w:r>'
+DOCX_TEXT.linebreak = '<w:br />'
 
 -- Used to store YAML variables
 local YAML_VARS = {}
@@ -135,8 +139,32 @@ function setMeta(meta)
     return meta
 end
 
+function handleDL(dl)
+    -- we only care about DocX in this filter
+    if FORMAT == "docx" then
+        local outList = {}
+
+        for i, item in ipairs(dl.content) do
+            -- print(string.format("Found item %d - %s | %s", i, pandoc.utils.stringify(item[1]), item[2]))
+
+            local termNum = string.format("3.%d", i)
+            local outTerm = docx( DOCX_TEXT.term.Open .. 
+                                    termNum .. 
+                                    DOCX_TEXT.linebreak ..
+                                    pandoc.utils.stringify(item[1]) ..
+                                    DOCX_TEXT.term.Close)
+            local outDef = item[2];
+            
+            table.insert(outList, {outTerm, outDef})
+        end    
+
+        return pandoc.DefinitionList(outList)
+    end
+end
+
 function isSpecialBlock(text)
-    return text == 'comment' or text == 'box' or text == 'center' or text == 'toc' or text == 'ednote'
+    return  text == 'comment' or text == 'box' or text == 'center' or 
+            text == 'toc' or text == 'ednote'
 end
 
 function handleBlocks(block)
@@ -154,6 +182,14 @@ function handleBlocks(block)
             -- insert in back
             -- table.insert( block.content, pandoc.Plain({DOCX_TEXT["block_" .. block.classes[1]].Close}) )
             -- return block
+        end
+    elseif block.classes[1] == nil then
+        -- print(string.format("c: '%s'\t c1: '%s'", block.content, block.content[1]))
+        -- print(string.format("attr '%s'", block.attributes.number))
+        
+        if block.classes[2] ~= nil then
+            foo = block.classes[2][0];
+            print(string.format("foo: %s", foo))
         end
     end
 end
@@ -319,6 +355,7 @@ local COMMENT_FILTER = {
 --    {Para = handleTransclusion},  -- Transclusion before other filters
 --    {Para = handleNoIndent},      -- Non-indented paragraphs (after transclusion)
 --    {CodeBlock = handleCode},     -- Convert TikZ images (before Image)
+    {DefinitionList = handleDL},    -- definition lists
     {Div = handleBlocks},         -- Comment blocks (before inlines)
     {RawBlock = RawBlock, Para = NLPara},  -- Handle forced page breaks
 --    {Image = handleImages},       -- Images (so captions get inline filters)
