@@ -7,9 +7,4 @@ reference-doc: common/reference.docx
 toc-depth: 2
     
 filters:
-- common/WordExtrasFilter.lua
-
-# Note that these take files, not their contents:
-include-before-body: []
-include-after-body: []
-include-in-header: []
+- common/NewWordFilter.lua
