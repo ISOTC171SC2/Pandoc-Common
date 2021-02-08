@@ -6,6 +6,16 @@ set -eux
 PD_DOCKER_IMG=pandoc/core
 LO_DOCKER_IMG=ipunktbs/docker-libreoffice-headless
 
+#detect platform that we're running on...
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    Linux*)     machine=Linux;;
+    Darwin*)    machine=Mac;;
+    CYGWIN*)    machine=Cygwin;;
+    MINGW*)     machine=MinGw;;
+    *)          machine="UNKNOWN:${unameOut}"
+esac
+
 # this is the core routine to process one file...
 convertOne() {
 	# make sure we have the docker images
@@ -18,13 +28,19 @@ convertOne() {
 		docker pull "${LO_DOCKER_IMG}"
 	fi
 
+	curPath=`pwd`
+	echo "curPath = ${curPath}"
+	if [ "${machine}" == "MinGw" ]; then
+		curPath=/`pwd`
+	fi
+
 	# Do Conversions
-	echo "Converting DocBook to Word"
-	# docker run --rm -v `pwd`:`pwd` -w `pwd`/output "${PD_DOCKER_IMG}" -f docbook -t docx "${BASE_NAME}".xml -o "${BASE_NAME}".docx
+	echo "Converting Mardown to Word"
+	docker run --rm -v "${curPath}":"${curPath}" -w "${curPath}" "${PD_DOCKER_IMG}" --defaults ./common/2docx.yml --no-highlight -o "$2".docx "$1" 
 
 	echo "Converting Word to PDF"
 	echo "$1 -> $2.pdf"
-	docker run --rm -it -v `pwd`:`pwd` -w `pwd` --name libreoffice-headless "${LO_DOCKER_IMG}" --headless --convert-to pdf:writer_pdf_Export --outdir `pwd` "$1"
+	docker run --rm -it -v "${curPath}":"${curPath}" -w "${curPath}" --name libreoffice-headless "${LO_DOCKER_IMG}" --headless --convert-to pdf:writer_pdf_Export --outdir `pwd` "$2".docx
 }
 
 # For each file specified on the command line...
@@ -43,10 +59,3 @@ do
 
 	convertOne "${filename}" "${base}"
 done
-
-# if you forgot the file to be processed, throw an error
-# if [ -z "$1" ]
-# then
-#    echo "You forgot to specify which .md file to be processed";
-#    exit 1
-# fi
